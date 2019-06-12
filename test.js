@@ -1,19 +1,15 @@
 const sense = require('./index')
 
 try {
-    sense({
-        email: "email",
-        password: "password plain text or base64"
-    }, (data) => {
-        console.log(data)
-    }).then((thisSense) => {
-        thisSense.getDevices().then(devices => {
+    sense({email: "email", password: "password", verbose: false})
+    .then(mySense => {
+        mySense.getDevices().then(devices => {
             console.log(devices);
         })
-        thisSense.getMonitorInfo().then(monitor => {
+        mySense.getMonitorInfo().then(monitor => {
             console.log(monitor);
         })
-        thisSense.getTimeline().then(timeline => {
+        mySense.getTimeline().then(timeline => {
             console.log(timeline);
         })
     })
