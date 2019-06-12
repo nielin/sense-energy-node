@@ -23,7 +23,7 @@ After opening the websocket stream, it is strongly recommended that you immediat
 ## Usage Example
 
 ```javascript
-const sense = require('node-sense-monitor')
+const sense = require('sense-energy-node')
 const email = 'email';
 const password = 'password';
 

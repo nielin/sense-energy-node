@@ -1,6 +1,6 @@
 {
   "name": "sense-energy-node",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Sense Energy Monitor API for NodeJS (unofficial)",
   "main": "index.js",
   "scripts": {
