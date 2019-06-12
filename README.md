@@ -9,7 +9,7 @@ After opening the websocket stream, it is strongly recommended that you immediat
 
 ## Installation
 
-`npm install node-sense-monitor`
+`npm install sense-energy-node`
 
 ## Exposed objects and methods
 - authData: gets account details after logging in
