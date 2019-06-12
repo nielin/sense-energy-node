@@ -1,35 +1,126 @@
-# Unofficial Sense API for NodeJS
+# Sense Energy Monitor API for Node (unofficial)
 
-This is an UNOFFICIAL implimentation of the Sense Home Energy Monitoring API using es6 and promises with real time support.
+This is an unofficial API for the Sense Energy Monitor. It was forked from blandman's unofficial-sense implementation. The key difference is this implementation does not automatically start up the websocket stream. It also contains additional error handling and promises.
 
-This has also been integrated into a node-red module, see it [here](https://flows.nodered.org/node/node-red-contrib-unofficial-sense).
+This version is used by the [SmartThings-Sense app](https://github.com/brbeaird/SmartThings_SenseMonitor).
+
+##Important Note on Real-time websocket streaming
+After opening the websocket stream, it is strongly recommended that you immediately close the stream after receiving a packet of data. If you leave the stream open, you will likely run into rate limiting from Sense servers. Sense is known to have limits on concurrent websocket streams per account. If you leave a stream open and then try to open the Sense mobile or web app, the real-time view in those apps likely will not function.
 
 ## Installation
 
-`npm install unofficial-sense`
+`npm install node-sense-monitor`
 
-## Usage
+## Exposed objects and methods
+- authData: gets account details after logging in
+- getDevices: gets list of all devices associated with the account
+- getMonitorInfo: gets information on the monitor device itself
+- getTimeline: gets recent events from the Sense timeline
+- getAuth: triggers re-authentication (used in case token expires)
+- openStream/closeStream: opens/closes the websocket stream
+- events.on('data'): subscribes to websocket data
+
+## Usage Example
 
 ```javascript
-const sense = require('unofficial-sense')
+const sense = require('node-sense-monitor')
+const email = 'email';
+const password = 'password';
 
-sense({
-    email: "email",
-    password: "password plain text or base64",
-    verbose: true //optional
-}, (data) => {
-    console.log(data) 
-    //real time data stream from your sense monitor
-})
+//Global Variables
+var mySense;                        //Main Sense API object
+var currentlyProcessing = false;    //Flag to ensure only one websocket packet is handled at a time
+var websocketPollingInterval = 60;  //Number of seconds between opening/closing the websocket
+
+startSense();
+
+async function startSense(){
+    try {
+        mySense = await sense({email: email, password: password, verbose: false})   //Set up Sense API object and authenticate
+
+        //Get devices
+        await mySense.getDevices().then(devices => {
+            for (let dev of devices) {
+                console.log(dev);   //Process devices here
+            }
+        });
+
+        //Get monitor info
+        await mySense.getMonitorInfo().then(monitor => {
+            console.log(monitor);   //Process monitor details here
+        })
+
+        //Handle websocket data updates (one at a time)
+        mySense.events.on('data', (data) => {
+
+            //Check for loss of authorization. If detected, try to reauth
+            if (data.payload.authorized == false){
+                console.log('Authentication failed. Trying to reauth...');
+                refreshAuth();
+            }
+
+            //Set processing flag so we only send through and process one at a time
+            if (data.type === "realtime_update" && data.payload && data.payload.devices) {
+                mySense.closeStream();
+                if (currentlyProcessing){
+                    return 0;
+                }
+                currentlyProcessing = true;
+                console.log(`Fresh websocket device data incoming...`)
+
+                if (data.payload && data.payload.devices) {
+                    console.log(data.payload.devices[0]);   //Handle websocket stream devices here
+                }
+            }
+            return 0;
+        });
+
+        //Handle closures and errors
+        mySense.events.on('close', (data) => {
+            console.log(`Sense WebSocket Closed | Reason: ${data.wasClean ? 'Normal' : data.reason}`);
+            let interval = websocketPollingInterval && websocketPollingInterval > 10 ? websocketPollingInterval : 60;
+
+            //On clean close, set up the next scheduled check
+            console.log(`New poll scheduled for ${interval * 1000} ms from now.`);
+            setTimeout(() => {
+                mySense.openStream();
+            },  interval * 1000);
+        });
+        mySense.events.on('error', (data) => {
+            console.log('Error: Sense WebSocket Closed | Reason: ' + data.msg);
+        });
+
+        //Open websocket flow (and re-open again on an interval)
+        mySense.openStream();
+
+    } catch (error) {
+        console.log(`FATAL ERROR: ${error}`);
+        if (error.stack){
+            console.log(`FATAL ERROR: ${error.stack}`);
+        }
+        process.exit();
+    }
+}
+
+//Attempt to refresh auth
+function refreshAuth(){
+    try {
+        mySense.getAuth();
+    } catch (error) {
+        console.log(`Re-auth failed: ${error}. Exiting.`);
+        process.exit();
+    }
+}
+
 ```
 
-The callback (optional) will be called anytime data updates from the Sense websocket. There are two (or more) status types that will be returned in this callback. Sense will also send data pertaining to new devices discovered and notifications. Those have been seen but not captured/documented.
+##API Response Reference
 
-### Authenticated
+### Websocket - Authenticated
 ```json
 {
     "status": "Authenticated",
-    "data": { 
+    "data": {
         "authorized": true,
         "account_id": "xxxxx",
         "user_id": "xxxxx",
@@ -48,7 +139,7 @@ The callback (optional) will be called anytime data updates from the Sense webso
     }
 }
 ```
-### Recevied
+### Websocket - Recevied
 ```json
 {
     "status": "Received",
@@ -200,7 +291,7 @@ The callback (optional) will be called anytime data updates from the Sense webso
         },
         "epoch": 1528234102,
         "deltas": [
-        
+
         ],
         "voltage": [
         121.58633422852,
@@ -212,55 +303,8 @@ The callback (optional) will be called anytime data updates from the Sense webso
 }
 ```
 
-## Manual Data Retreival
-
-To get more information, you may need to access the following functions exposed by the promise resolver of the sense function.
-
-- events.on('data')
-- getDevices
-- getMonitorInfo
-- getTimeline
-
-### Using These functions 
-(Don't forget to pass email/password object)
-```javascript
-sense({...}).then((mySense) => {
-    mySense.getDevices().then(devices => {
-        console.log(devices);
-    })
-    mySense.getMonitorInfo().then(monitor => {
-        console.log(monitor);
-    })
-    mySense.getTimeline().then(timeline => {
-        console.log(timeline);
-    })
-    mySense.events.on('data', (data) => {
-      console.log(data);
-    })
-})
-```
-Or you can try the following
-```javascript
-(async () => {
-    const mySense = await sense({...})
-    const deviceInfo = await mySense.getDevices()
-    const monitorInfo = await mySense.getMonitorInfo()
-    const timeline = await mySense.getTimeline()
-    mySense.events.on('data', (data) => {
-      console.log(data);
-    })
-})
-```
-
-All functions return promises containing the following data
-
-### *events.on('data')*
-Use this to subscribe to realtime updates (see above for data example), use this instead of the callback function. 
-
-
 ### *getDevices()*
 
-This will retreive all learned devices and the data on those devices with the following format
 ```json
 [
     {
@@ -367,7 +411,7 @@ This will retreive all learned devices and the data on those devices with the fo
         "UserDeviceTypeDisplayString": "Washer",
         "UserEditable": "true"
       }
-    } 
+    }
 ]
 ```
 ### *getMonitorInfo()*
@@ -394,7 +438,7 @@ This will retreive all learned devices and the data on those devices with the fo
         "icon": "stove",
         "name": "Possible Oven",
         "progress": 10
-      } 
+      }
     ],
     "found": [
       {
@@ -587,11 +631,11 @@ This will retreive all learned devices and the data on those devices with the fo
       "location": "Bathroom",
       "guid": "b7c01d78-5276-41ea-9413-cdbac06e5647",
       "user_device_type": "MysteryHeat"
-    } 
+    }
   ]
 }
 ```
 
 # Disclaimer
 
-This module was developed without the consent of the Sense company, and makes use of an undocumented and unsupported API. Use at your own risk, and be aware that Sense may change the API at any time and break this repository perminantly. 
+This module was developed without the consent of the Sense company, and makes use of an undocumented and unsupported API. Use at your own risk, and be aware that Sense may change the API at any time and break this repository perminantly.
