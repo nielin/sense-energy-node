@@ -4,8 +4,8 @@ This is an unofficial API for the Sense Energy Monitor. It was forked from bland
 
 This version is used by the [SmartThings-Sense app](https://github.com/brbeaird/SmartThings_SenseMonitor).
 
-##Important Note on Real-time websocket streaming
-After opening the websocket stream, it is strongly recommended that you immediately close the stream after receiving a packet of data. If you leave the stream open, you will likely run into rate limiting from Sense servers. Sense is known to have limits on concurrent websocket streams per account. If you leave a stream open and then try to open the Sense mobile or web app, the real-time view in those apps likely will not function.
+## Important Note on Real-time websocket streaming
+After opening the websocket stream, it is strongly recommended that you immediately close the stream after receiving a packet of data. If you leave the stream open, you will likely run into rate limiting from Sense servers. Sense is known to have limits on concurrent websocket streams per account. If you leave a stream open and then try to open the Sense mobile or web app, the real-time view in those apps likely will not function. Open streams also generate unnecessary work on Sense servers.
 
 ## Installation
 
@@ -114,7 +114,7 @@ function refreshAuth(){
 
 ```
 
-##API Response Reference
+## API Response Reference
 
 ### Websocket - Authenticated
 ```json
@@ -131,7 +131,7 @@ function refreshAuth(){
             "solar_connected": false,
             "solar_configured": false,
             "online": false,
-            "attributes": [Object],
+            "attributes": Object,
             "signal_check_completed_time": "2017-10-17T23:51:23.000Z" } ],
         "bridge_server": "wss://mb1.home.sense.com",
         "partner_id": null,
@@ -505,7 +505,7 @@ function refreshAuth(){
       "user_device_type": "MysteryMotor"
     }
   ],
-  "user_id": xxxxx,
+  "user_id": xxx,
   "items": [
     {
       "time": "2018-06-05T21:57:43.086Z",
