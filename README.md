@@ -24,8 +24,8 @@ After opening the websocket stream, it is strongly recommended that you immediat
 
 ```javascript
 const sense = require('sense-energy-node')
-const email = 'email';
-const password = 'password';
+const email = 'yourEmail';
+const password = 'yourPassword';
 
 //Global Variables
 var mySense;                        //Main Sense API object

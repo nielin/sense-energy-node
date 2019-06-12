@@ -77,8 +77,11 @@ module.exports =
                     if (res.status == 200){
                         resolve(await res.json());
                     }
-                    else if (res.status == 401){
+                    else if (res.status == 401 || res.status == 400){
                         reject('Authentication failed! Check username/password and try again.');
+                    }
+                    else{
+                        reject(`Authentication failed! ${res.statusText}`);
                     }
                 })
             }
