@@ -73,16 +73,20 @@ module.exports =
 
             async function doAuth(){
                 return new Promise( async (resolve, reject) => {
-                    const res = await fetch(`${apiURL}authenticate`, { method: 'POST', body: `email=${config.email}&password=${config.password}`, headers: {"Content-Type":"application/x-www-form-urlencoded"} })
-                    if (res.status == 200){
-                        resolve(await res.json());
-                    }
-                    else if (res.status == 401 || res.status == 400){
-                        reject('Authentication failed! Check username/password and try again.');
-                    }
-                    else{
-                        reject(`Authentication failed! ${res.statusText}`);
-                    }
+                    try {
+                        const res = await fetch(`${apiURL}authenticate`, { method: 'POST', body: `email=${config.email}&password=${config.password}`, headers: {"Content-Type":"application/x-www-form-urlencoded"} })
+                        if (res.status == 200){
+                            resolve(await res.json());
+                        }
+                        else if (res.status == 401 || res.status == 400){
+                            reject('Authentication failed! Check username/password and try again.');
+                        }
+                        else{
+                            reject(`Authentication failed! ${res.statusText}`);
+                        }                        
+                    } catch (error) {                        
+                        reject(error);
+                    }                    
                 })
             }
 
@@ -98,16 +102,20 @@ module.exports =
                 //Utility function for all callout methods; handles 401's with a special reject so client can reliably catch it
                 async function doSenseCallout (URL) {
                     return new Promise( async (resolve, reject) => {
-                        const res = await fetch(URL, { method: 'GET', headers: {"Authorization": `bearer ${authData.access_token}`} })
-                        if (res.status == 200){
-                            resolve(await res.json());
-                        }
-                        else if (res.status == 401){
-                            reject('Authentication failed!');
-                        }
-                        else{
-                            reject(await res.json())
-                        }
+                        try {
+                            const res = await fetch(URL, { method: 'GET', headers: {"Authorization": `bearer ${authData.access_token}`} })
+                            if (res.status == 200){
+                                resolve(await res.json());
+                            }
+                            else if (res.status == 401){
+                                reject('Authentication failed!');
+                            }
+                            else{
+                                reject(await res.json())
+                            }
+                        } catch (error) {
+                            reject(error);
+                        }                        
                     })
                 }
 
@@ -137,6 +145,10 @@ module.exports =
                     },
                     getTimeline: async () => {
                         return doSenseCallout(`${apiURL}users/${authData.user_id}/timeline`);
+                    },
+                    
+                    getDailyUsage: async (day) => {
+                        return doSenseCallout(`${apiURL}app/history/trends?monitor_id=33218&scale=DAY&start=${day}T05%3A00%3A00.000Z`)
                     }
                 })
             } else if(authData.status == 'error') {
