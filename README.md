@@ -638,4 +638,4 @@ function refreshAuth(){
 
 # Disclaimer
 
-This module was developed without the consent of the Sense company, and makes use of an undocumented and unsupported API. Use at your own risk, and be aware that Sense may change the API at any time and break this repository perminantly.
+This module was developed without the consent of the Sense company, and makes use of an undocumented and unsupported API. Use at your own risk, and be aware that Sense may change the API at any time and break this repository permanently.
