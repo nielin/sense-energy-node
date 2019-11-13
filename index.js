@@ -83,10 +83,10 @@ module.exports =
                         }
                         else{
                             reject(`Authentication failed! ${res.statusText}`);
-                        }                        
-                    } catch (error) {                        
+                        }
+                    } catch (error) {
                         reject(error);
-                    }                    
+                    }
                 })
             }
 
@@ -115,7 +115,7 @@ module.exports =
                             }
                         } catch (error) {
                             reject(error);
-                        }                        
+                        }
                     })
                 }
 
@@ -146,9 +146,9 @@ module.exports =
                     getTimeline: async () => {
                         return doSenseCallout(`${apiURL}users/${authData.user_id}/timeline`);
                     },
-                    
-                    getDailyUsage: async (day) => {
-                        return doSenseCallout(`${apiURL}app/history/trends?monitor_id=33218&scale=DAY&start=${day}T05%3A00%3A00.000Z`)
+
+                    getDailyUsage: async (startTime) => {
+                        return doSenseCallout(`${apiURL}app/history/trends?monitor_id=${authData.monitors[0].id}&scale=DAY&start=${encodeURI(startTime)}`)
                     }
                 })
             } else if(authData.status == 'error') {
