@@ -42,7 +42,7 @@ const setupWS = (onData) => {
             if (verbose){console.log("Error: " + data);}
         };
     } catch (error) {
-        console.log(error);
+        console.error(`Websocket error: ${error.message}`);
     }
 }
 
@@ -68,7 +68,6 @@ module.exports =
             }
             else{
                 authData = await doAuth();
-                //authData = await (await fetch(`${apiURL}authenticate`, { method: 'POST', body: `email=${config.email}&password=${config.password}`, headers: {"Content-Type":"application/x-www-form-urlencoded"} })).json()
             }
 
             async function doAuth(){
@@ -79,13 +78,13 @@ module.exports =
                             resolve(await res.json());
                         }
                         else if (res.status == 401 || res.status == 400){
-                            reject('Authentication failed! Check username/password and try again.');
+                            reject(new Error('Authentication failed! Check username/password and try again.'));
                         }
                         else{
-                            reject(`Authentication failed! ${res.statusText}`);
+                            reject(new Error(`Authentication failed! ${res.statusText}`));
                         }
                     } catch (error) {
-                        reject(error);
+                        reject(new Error(`Authentication error: ${error.message}`));
                     }
                 })
             }
@@ -108,10 +107,10 @@ module.exports =
                                 resolve(await res.json());
                             }
                             else if (res.status == 401){
-                                reject('Authentication failed!');
+                                reject(new Error('Authentication failed!'));
                             }
                             else{
-                                reject(await res.json())
+                                reject(new Error(await res.json()));
                             }
                         } catch (error) {
                             reject(error);
