@@ -73,7 +73,7 @@ module.exports =
             async function doAuth(){
                 return new Promise( async (resolve, reject) => {
                     try {
-                        const res = await fetch(`${apiURL}authenticate`, { method: 'POST', body: `email=${config.email}&password=${config.password}`, headers: {"Content-Type":"application/x-www-form-urlencoded"} })
+                        const res = await fetch(`${apiURL}authenticate`, { method: 'POST', body: `email=${encodeURI(config.email)}&password=${encodeURI(config.password)}`, headers: {"Content-Type":"application/x-www-form-urlencoded"} })
                         if (res.status == 200){
                             resolve(await res.json());
                         }
