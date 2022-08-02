@@ -148,6 +148,11 @@ module.exports =
 
                     getDailyUsage: async (startTime) => {
                         return doSenseCallout(`${apiURL}app/history/trends?monitor_id=${authData.monitors[0].id}&scale=DAY&start=${encodeURI(startTime)}`)
+                    },
+
+                    getUsage: async (startTime, scale) => {
+                        scale = scale || 'DAY';
+                        return doSenseCallout(`${apiURL}app/history/trends?monitor_id=${authData.monitors[0].id}&scale=${scale}&start=${encodeURI(startTime)}`)
                     }
                 })
             } else if(authData.status == 'error') {
